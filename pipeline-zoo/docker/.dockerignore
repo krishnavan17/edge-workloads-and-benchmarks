@@ -1,0 +1,29 @@
+# Build context is the project root (..)
+# Exclude large directories not needed in the image
+
+# Model files and caches
+pipelines/
+../tools/model-conversion/models/
+../tools/model-conversion/venv/
+../tools/model-conversion/datasets/
+../tools/model-conversion/source-models/
+../tools/media-downloader/media/
+
+# Runtime outputs
+runs/
+results/
+pipeline-zoo/assets/
+pipeline-zoo/model-cache/
+
+# Dev / docs
+html/
+setup/
+.git/
+.github/
+*.md
+__pycache__/
+*.pyc
+
+# Pipeline-zoo runtime artifacts
+pipeline-zoo/model-cache/
+pipeline-zoo/.env

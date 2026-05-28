@@ -1,0 +1,88 @@
+# =============================================================================
+# Pipeline Zoo — Docker Compose
+#
+# Two services:
+#   assets-download — downloads/converts models + transcodes video (one image)
+#   pipeline-server — runs DL Streamer pipelines (REST API)
+#
+# Communication: one-way via shared bind mount (./assets/)
+#   assets-download writes → pipeline-server reads (:ro)
+#
+# Usage:
+#   docker compose --profile download up -d     # start assets-download
+#   docker compose --profile pipeline up -d     # start pipeline-server
+#   docker compose down                         # stop all
+#
+# pipeline-zoo.py manages these services automatically.
+# =============================================================================
+
+services:
+  # ── Asset Download Service (models + video) ───────────────────────────────
+  assets-download:
+    image: ${DLSTREAMER_IMAGE:-intel/dlstreamer:2026.1.0-20260505-weekly-ubuntu24}
+    container_name: pipeline-zoo-assets
+    entrypoint: ["tail", "-f", "/dev/null"]
+    user: "0:0"
+    environment:
+      - http_proxy=${HTTP_PROXY:-}
+      - https_proxy=${HTTPS_PROXY:-}
+      - no_proxy=${NO_PROXY:-}
+    volumes:
+      - ./assets:/output
+      - model-cache:/cache
+      - ../tools/model-conversion:/model-conversion:ro
+      - ./docker/video_download.py:/opt/scripts/video_download.py:ro
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - "${RENDER_GROUP:-0}"
+    profiles:
+      - download
+
+  # ── DL Streamer Pipeline Server ───────────────────────────────────────────
+  pipeline-server:
+    image: ${PIPELINE_SERVER_IMAGE:-intel/dlstreamer-pipeline-server:2026.1.0-20260505-weekly-ubuntu24}
+    container_name: pipeline-zoo-server
+    read_only: true
+    security_opt:
+      - no-new-privileges
+    init: true
+    tmpfs:
+      - /var/cache/pipeline_root:uid=1999,gid=1999
+      - /tmp:uid=1999,gid=1999
+      - /var/tmp:uid=1999,gid=1999
+      - /home/.cl_cache:uid=1999,gid=1999
+      - /home/.xdg_runtime_dir:uid=1999,gid=1999
+      - /home/pipeline-server/models:uid=1999,gid=1999
+    volumes:
+      - ./assets:/home/pipeline-server/pipelines:ro
+      - ${CONFIG_PATH:-/dev/null}:/home/pipeline-server/config.json:ro
+    devices:
+      - /dev/dri:/dev/dri
+      - /dev/accel:/dev/accel
+    group_add:
+      - "${RENDER_GROUP:-0}"
+    environment:
+      - ENABLE_RTSP=true
+      - RTSP_PORT=${RTSP_PORT:-8554}
+      - REST_SERVER_PORT=${REST_PORT:-8080}
+      - GST_DEBUG=1
+      - LOG_LEVEL=INFO
+      - ONEDNN_VERBOSE=0
+      - OPENCV_OCL_RUNTIME=
+      - ZE_ENABLE_ALT_DRIVERS=libze_intel_npu.so
+      - CORE_PINNING=${CORE_PINNING:-}
+    ports:
+      - "${REST_PORT:-8080}:${REST_PORT:-8080}"
+      - "${RTSP_PORT:-8554}:${RTSP_PORT:-8554}"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:${REST_PORT:-8080}/pipelines || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 20s
+    profiles:
+      - pipeline
+
+volumes:
+  model-cache: {}

@@ -1,0 +1,41 @@
+{
+  "assets": {
+    "detection_model": "dlstreamer/yolov5m",
+    "classification_model_0": "google/resnet-v1-50-tf",
+    "classification_model_1": "pytorch/mobilenet-v2",
+    "input_video": "https://videos.pexels.com/video-files/6891009/6891009-uhd_3840_2160_30fps.mp4"
+  },
+  "pipelines": [
+    {
+      "name": "video-analytics-pipeline",
+      "mode": "medium",
+      "pipeline": [
+        "filesrc location=\"${video-path}\" ! h265parse ! vah265dec !",
+        "capsfilter caps=\"video/x-raw(memory:VAMemory)\" !",
+        "queue !",
+        "gvadetect model=\"${det-model-path}\"",
+        "  model-proc=\"${det-model-dir}/yolo-v5.json\"",
+        "  device=GPU pre-process-backend=va-surface-sharing",
+        "  nireq=2 ie-config=NUM_STREAMS=2 batch-size=8",
+        "  inference-interval=3 threshold=0.7 model-instance-id=yolov5m !",
+        "queue !",
+        "gvatrack tracking-type=1 config=tracking_per_class=false !",
+        "queue !",
+        "gvaclassify model=\"${class1-model-path}\"",
+        "  model-proc=\"${class1-model-dir}/resnet-50.json\"",
+        "  device=${classify_0_device} pre-process-backend=${classify_0_pre_process_backend}",
+        "  nireq=${classify_0_nireq} ${classify_0_ie_config} batch-size=${classify_0_batch_size}",
+        "  inference-interval=3 inference-region=1 model-instance-id=r50 !",
+        "queue !",
+        "gvaclassify model=\"${class2-model-path}\"",
+        "  model-proc=\"${class2-model-dir}/mobilenet-v2.json\"",
+        "  device=${classify_1_device} pre-process-backend=${classify_0_pre_process_backend}",
+        "  nireq=${classify_0_nireq} ${classify_0_ie_config} batch-size=${classify_1_batch_size}",
+        "  inference-interval=3 inference-region=1 model-instance-id=mv2 !",
+        "queue !",
+        "gvafpscounter starting-frame=2000 !",
+        "fakesink sync=false async=false"
+      ]
+    }
+  ]
+}

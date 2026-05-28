@@ -1,0 +1,35 @@
+{
+  "assets": {
+    "detection_model": "public/yolov8_license_plate_detector",
+    "classification_model": "public/ch_PP-OCRv4_rec_infer",
+    "input_video": "license-plate-detection.mp4"
+  },
+  "pipelines": [
+    {
+      "name": "license-plate-recognition",
+      "mode": "default",
+      "pipeline": [
+        "filesrc location=\"${video-path}\" ! decodebin3 !",
+        "queue !",
+        "gvadetect model=\"${det-model-path}\"",
+        "  model-instance-id=detect0",
+        "  device=${detect_device} pre-process-backend=${detect_pre_process_backend}",
+        "  ${detect_ie_config} batch-size=${detect_batch_size}",
+        "  nireq=${detect_nireq}",
+        "  inference-interval=3 inference-region=full-frame !",
+        "queue !",
+        "gvatrack tracking-type=short-term-imageless !",
+        "queue !",
+        "gvaclassify model=\"${class-model-path}\"",
+        "  model-instance-id=classify0",
+        "  device=${classify_0_device} pre-process-backend=${classify_0_pre_process_backend}",
+        "  ${classify_0_ie_config} batch-size=${classify_0_batch_size}",
+        "  nireq=${classify_0_nireq}",
+        "  inference-interval=3 inference-region=roi-list reclassify-interval=1 !",
+        "queue !",
+        "gvafpscounter starting-frame=500 !",
+        "fakesink sync=false async=false"
+      ]
+    }
+  ]
+}
