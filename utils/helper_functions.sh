@@ -246,7 +246,7 @@ power_collect() {
     AvgWallPower="NA"
     if [[ -f "${SocketPowerLogFile:-}" ]]; then
         AvgWallPower=$(awk -F',' \
-            'NR>1 && $2 ~ /^[0-9]+(\.[0-9]+)?$/ {sum+=$2; count++} END {if(count>0) printf "%.2f", sum/count; else print "NA"}' \
+            'NR>1 {gsub(/\r/, "", $2); if ($2 ~ /^[0-9]+(\.[0-9]+)?$/) {sum+=$2; count++}} END {if(count>0) printf "%.2f", sum/count; else print "NA"}' \
             "${SocketPowerLogFile}")
         [[ -n "${AvgWallPower}" ]] || AvgWallPower="NA"
     fi

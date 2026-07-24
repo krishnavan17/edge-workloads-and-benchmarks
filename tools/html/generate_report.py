@@ -75,6 +75,9 @@ def read_csvs(
         for res_file in subdir.iterdir():
             if not res_file.is_file() or not pattern.search(res_file.name):
                 continue
+            # Skip wall power sample sidecar files (timestamp,power_w only)
+            if res_file.name.endswith("_wall_power.csv"):
+                continue
             try:
                 with res_file.open("r", newline="") as fh:
                     rows = list(csv.reader(fh))

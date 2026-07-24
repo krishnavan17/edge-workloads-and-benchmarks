@@ -74,7 +74,7 @@ def main():
     command = f"show sensor outlet {args.outlet} activePower\n"
 
     with open(args.output, "w", newline="") as f:
-        writer = csv.writer(f)
+        writer = csv.writer(f, lineterminator="\n")
         writer.writerow(["timestamp", "power_w"])
 
         try:
