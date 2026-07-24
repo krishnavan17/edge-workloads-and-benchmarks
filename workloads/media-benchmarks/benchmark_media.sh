@@ -259,6 +259,10 @@ fi
 if [[ "${AvgPower}" != "NA" ]]; then
     echo "[ Info ] Average Power: ${AvgPower} W"
 fi
+# shellcheck disable=SC2154  # AvgWallPower set by power_collect()
+if [[ "${AvgWallPower}" != "NA" ]]; then
+    echo "[ Info ] Wall Power: ${AvgWallPower} W"
+fi
 if [[ "${Efficiency}" != "NA" ]]; then
     echo "[ Info ] Power Efficiency: ${Efficiency} FPS/W"
 fi
@@ -267,10 +271,10 @@ echo -e "\n\n"
 # Save results to CSV
 csv_escape() { printf '%s' "$1" | sed 's/"/""/g'; }
 
-CSVLabels="Timestamp,System,Media,Codec,Resolution,Streams,Duration (s),Throughput (fps),Throughput per Stream (fps/#),Theoretical Stream Density,Target FPS,Avg Power (W),Efficiency (FPS/W),Pipeline"
+CSVLabels="Timestamp,System,Media,Codec,Resolution,Streams,Duration (s),Throughput (fps),Throughput per Stream (fps/#),Theoretical Stream Density,Target FPS,Avg Power (W),Avg Wall Power (W),Efficiency (FPS/W),Pipeline"
 
 printf '%s\n' "${CSVLabels}" > "${ResultsDir}/${Filename}.csv"
-printf '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' \
+printf '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' \
     "$(csv_escape "${Timestamp}")" \
     "$(csv_escape "${System}")" \
     "$(csv_escape "${MediaName}")" \
@@ -283,6 +287,7 @@ printf '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n'
     "$(csv_escape "${TheoreticalStreams}")" \
     "$(csv_escape "${TargetFPS}")" \
     "$(csv_escape "${AvgPower}")" \
+    "$(csv_escape "${AvgWallPower}")" \
     "$(csv_escape "${Efficiency}")" \
     "$(csv_escape "${Pipeline}")" \
     >> "${ResultsDir}/${Filename}.csv"

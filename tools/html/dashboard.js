@@ -559,6 +559,7 @@ class PipelineDashboard extends BaseDashboard {
         ? `<span class="status-success">${record.theoretical_streams}${record.primary_theoretical != null && record.secondary_theoretical != null ? ` <small>(${esc(record.detect)}: ${record.primary_theoretical} | ${esc(record.classify)}: ${record.secondary_theoretical})</small>` : ''}</span>`
         : '<span class="status-error">N/A</span>';
       const power = record.avg_power && record.avg_power !== 'NA' ? `${parseFloat(record.avg_power).toFixed(2)}` : 'N/A';
+      const wallPower = record.avg_wall_power && record.avg_wall_power !== 'NA' ? `${parseFloat(record.avg_wall_power).toFixed(2)}` : 'N/A';
       const eff = record.efficiency && record.efficiency !== 'NA' ? `${parseFloat(record.efficiency).toFixed(2)}` : 'N/A';
       const cn = record.config.charAt(0).toUpperCase() + record.config.slice(1).toLowerCase();
       const isBest = bestConfigs[record.config] === record;
@@ -566,7 +567,7 @@ class PipelineDashboard extends BaseDashboard {
       const dc = record.device_config || `${record.detect}/${record.classify}`;
       return `<tr${isBest ? ' class="best-row"' : ''}>
         <td>${configCell}</td><td>${esc(dc)}</td><td>${esc(record.batch)}</td><td>${record.runs}</td>
-        <td>${fps}</td><td>${streams}</td><td>${power}</td><td>${eff}</td></tr>`;
+        <td>${fps}</td><td>${streams}</td><td>${power}</td><td>${wallPower}</td><td>${eff}</td></tr>`;
     }).join('');
     this.renderBestConfigSummary(bestConfigs);
   }
@@ -825,6 +826,7 @@ class VisionDashboard extends BaseDashboard {
         ? `${parseFloat(r.median_latency).toFixed(2)}`
         : 'N/A';
       const pwr = r.avg_power != null ? `${parseFloat(r.avg_power).toFixed(2)}` : 'N/A';
+      const wallPwr = r.avg_wall_power != null ? `${parseFloat(r.avg_wall_power).toFixed(2)}` : 'N/A';
       const eff = r.efficiency != null ? `${parseFloat(r.efficiency).toFixed(2)}` : 'N/A';
       const isBest = bestSet.has(r);
       const modelCell = isBest
@@ -833,7 +835,7 @@ class VisionDashboard extends BaseDashboard {
       const modeLabel = r.mode === 'tput' ? 'Throughput' : r.mode === 'latency' ? 'Latency' : r.mode;
       return `<tr${isBest ? ' class="best-row"' : ''}>
         <td>${modelCell}</td><td>${esc(r.device)}</td><td>${esc(modeLabel)}</td><td>${esc(r.batch)}</td>
-        <td>${thr}</td><td>${lat}</td><td>${pwr}</td><td>${eff}</td></tr>`;
+        <td>${thr}</td><td>${lat}</td><td>${pwr}</td><td>${wallPwr}</td><td>${eff}</td></tr>`;
     }).join('');
     this.renderBestConfigSummary(bestConfigs);
   }
@@ -1131,11 +1133,12 @@ class MediaDashboard extends BaseDashboard {
         ? `<span class="status-success">${r.theoretical_streams}</span>`
         : '<span class="status-error">N/A</span>';
       const pwr = r.avg_power != null ? `${parseFloat(r.avg_power).toFixed(2)}` : 'N/A';
+      const wallPwr = r.avg_wall_power != null ? `${parseFloat(r.avg_wall_power).toFixed(2)}` : 'N/A';
       const eff = r.efficiency != null ? `${parseFloat(r.efficiency).toFixed(2)}` : 'N/A';
       return `<tr>
         <td>${esc(r.media)}</td><td>${esc(r.codec.toUpperCase())}</td><td>${esc(r.resolution)}</td>
         <td>${esc(r.streams)}</td><td>${esc(r.runs)}</td>
-        <td>${thr}</td><td>${streams}</td><td>${pwr}</td><td>${eff}</td></tr>`;
+        <td>${thr}</td><td>${streams}</td><td>${pwr}</td><td>${wallPwr}</td><td>${eff}</td></tr>`;
     }).join('');
   }
 
@@ -1252,6 +1255,7 @@ class GenaiDashboard extends BaseDashboard {
         ? `${parseFloat(r.first_token_latency).toFixed(2)}`
         : 'N/A';
       const pwr = r.avg_power != null ? `${parseFloat(r.avg_power).toFixed(2)}` : 'N/A';
+      const wallPwr = r.avg_wall_power != null ? `${parseFloat(r.avg_wall_power).toFixed(2)}` : 'N/A';
       const eff = r.efficiency != null ? `${parseFloat(r.efficiency).toFixed(2)}` : 'N/A';
       const isBest = bestSet.has(r);
       const modelCell = isBest
@@ -1260,7 +1264,7 @@ class GenaiDashboard extends BaseDashboard {
       const typeLabel = (r.type || 'llm').toUpperCase();
       return `<tr${isBest ? ' class="best-row"' : ''}>
         <td>${modelCell}</td><td>${esc(r.device)}</td><td>${esc(shortPrecision(r.precision))}</td><td>${esc(typeLabel)}</td>
-        <td>${lat}</td><td>${thr}</td><td>${pwr}</td><td>${eff}</td></tr>`;
+        <td>${lat}</td><td>${thr}</td><td>${pwr}</td><td>${wallPwr}</td><td>${eff}</td></tr>`;
     }).join('');
     this.renderBestConfigSummary(bestConfigs);
   }

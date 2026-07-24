@@ -216,6 +216,10 @@ echo "[ Info ] 2nd Token Throughput: ${SecondTokenThroughput} tok/s"
 if [[ "${AvgPower}" != "NA" ]]; then
     echo "[ Info ] Average Power: ${AvgPower} W"
 fi
+# shellcheck disable=SC2154  # AvgWallPower set by power_collect()
+if [[ "${AvgWallPower}" != "NA" ]]; then
+    echo "[ Info ] Wall Power: ${AvgWallPower} W"
+fi
 if [[ "${Efficiency}" != "NA" ]]; then
     echo "[ Info ] Power Efficiency: ${Efficiency} tpt/W"
 fi
@@ -223,10 +227,10 @@ echo -e "\n\n"
 
 csv_escape() { printf '%s' "$1" | sed 's/"/""/g'; }
 
-CSVLabels="Timestamp,System,Model,Device,Precision,Type,Duration (s),1st Token Latency (ms),2nd Token Throughput (tok/s),Avg Power (W),Efficiency (tpt/W),Cores Pinned"
+CSVLabels="Timestamp,System,Model,Device,Precision,Type,Duration (s),1st Token Latency (ms),2nd Token Throughput (tok/s),Avg Power (W),Avg Wall Power (W),Efficiency (tpt/W),Cores Pinned"
 
 printf '%s\n' "${CSVLabels}" > "${DeviceDir}/${Filename}.csv"
-printf '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' \
+printf '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' \
     "$(csv_escape "${Timestamp}")" \
     "$(csv_escape "${System}")" \
     "$(csv_escape "${ModelName}")" \
@@ -237,6 +241,7 @@ printf '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' \
     "$(csv_escape "${FirstTokenLatency}")" \
     "$(csv_escape "${SecondTokenThroughput}")" \
     "$(csv_escape "${AvgPower}")" \
+    "$(csv_escape "${AvgWallPower}")" \
     "$(csv_escape "${Efficiency}")" \
     "$(csv_escape "${Cores}")" \
     >> "${DeviceDir}/${Filename}.csv"

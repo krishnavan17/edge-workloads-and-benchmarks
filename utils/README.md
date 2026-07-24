@@ -30,6 +30,27 @@ sudo ./get_package_power.sh -i 60
 [rapl] card1 (xe @ 0000:00:02.0): 1.72 W
 ```
 
+## Get Socket Power (Wall Power)
+Samples wall (socket) power in Watts from a PDU outlet over SSH. Benchmarks use
+this as a secondary "Wall Power" metric alongside package power.
+
+Configure the connection parameters in the *Wall (socket) power configuration*
+section of [`helper_functions.sh`](helper_functions.sh) (or via the environment),
+then enable it per workload with `make benchmarks WALL_POWER=True`. When
+`WALL_POWER` is enabled but any required parameter
+(`SOCKET_POWER_IP`, `SOCKET_POWER_USERNAME`, `SOCKET_POWER_PASSWORD`,
+`SOCKET_POWER_PORT`, `SOCKET_POWER_OUTLET`) is empty, the workload refuses to
+start. Requires the `paramiko` Python module (`pip install paramiko`).
+### Usage
+```bash
+python3 ./get_socket_power.py --ip <pdu_ip> --username <user> --password <pass> \
+    --outlet <n> --duration <seconds> --interval <seconds> --output <file.csv>
+```
+### Example output
+```bash
+[14:32:07] 212.0 W  (elapsed 5s)
+```
+
 ## Check HF Token
 Prompts for the user's HuggingFace token and saves as an environment variable for gated model access.
 ### Usage

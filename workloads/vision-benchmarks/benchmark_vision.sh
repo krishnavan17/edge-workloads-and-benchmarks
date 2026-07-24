@@ -273,15 +273,19 @@ if [[ "${AvgPower}" != "NA" && "${Throughput}" != "NA" ]]; then
     echo "[ Info ] Average Power: ${AvgPower} W"
     echo "[ Info ] Power Efficiency: ${Efficiency} FPS/W"
 fi
+# shellcheck disable=SC2154  # AvgWallPower set by power_collect()
+if [[ "${AvgWallPower}" != "NA" ]]; then
+    echo "[ Info ] Wall Power: ${AvgWallPower} W"
+fi
 echo -e "\n\n"
 
 # Save results to a CSV file
 csv_escape() { printf '%s' "$1" | sed 's/"/""/g'; }
 
-CSVLabels="Timestamp,System,Model,Device,Mode,Batch,Duration (s),Throughput (fps),Median Latency (ms),Concurrent,Avg Power (W),Efficiency (FPS/W),Primary FPS,Secondary FPS,Cores Pinned"
+CSVLabels="Timestamp,System,Model,Device,Mode,Batch,Duration (s),Throughput (fps),Median Latency (ms),Concurrent,Avg Power (W),Avg Wall Power (W),Efficiency (FPS/W),Primary FPS,Secondary FPS,Cores Pinned"
 
 printf '%s\n' "${CSVLabels}" > "${DeviceDir}/${Filename}.csv"
-printf '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' \
+printf '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' \
     "$(csv_escape "${Timestamp}")" \
     "$(csv_escape "${System}")" \
     "$(csv_escape "${Shortname}")" \
@@ -293,6 +297,7 @@ printf '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%
     "$(csv_escape "${Latency}")" \
     "$(csv_escape "${Concurrent:-None}")" \
     "$(csv_escape "${AvgPower}")" \
+    "$(csv_escape "${AvgWallPower}")" \
     "$(csv_escape "${Efficiency}")" \
     "$(csv_escape "${PrimaryFPS}")" \
     "$(csv_escape "${SecondaryFPS}")" \

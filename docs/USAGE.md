@@ -18,6 +18,7 @@ Run `make help` inside any workload directory for workload-specific options. Com
 | `RESUME` | Skip tests that already have results | `False` |
 | `DURATION` | Duration for each benchmark test (seconds) | `60`–`120` |
 | `POWER` | Enable power/efficiency metrics (requires sudo) | `True` |
+| `WALL_POWER` | Enable PDU wall power measurement (configure in `utils/helper_functions.sh`) | `False` |
 | `CORES` | CPU core pinning: `pcore`, `ecore`, or range (e.g., `0-11`) | all cores |
 
 ## Examples

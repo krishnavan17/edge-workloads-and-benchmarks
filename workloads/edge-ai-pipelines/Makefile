@@ -15,11 +15,13 @@ DURATION ?= 120
 CORES ?=
 MODEL_INST ?= 0
 POWER ?= True
+WALL_POWER ?= False
 CLEAR ?= False
 DRY_RUN ?= False
 RESUME ?= False
 
 SUDO := $(if $(filter True true TRUE yes YES,$(POWER)),sudo,)
+WALL_POWER_ENV := $(if $(filter True true TRUE yes YES,$(WALL_POWER)),WALL_POWER=True,)
 VERBOSE ?= 0
 
 # Usage
@@ -41,6 +43,7 @@ help:
 	@echo "    RESUME                    Skip tests that already have results (default: False)"
 	@echo "    DURATION                  Set the duration for each benchmark test (default: 120 seconds)"
 	@echo "    POWER                     Enable/Disable power/efficiency metrics (default: True, requires sudo)"
+	@echo "    WALL_POWER                Enable PDU wall power measurement (default: False, requires config in utils/helper_functions.sh)"
 	@echo "    MODEL_INST                Number of model instances for round-robin stream distribution (default: 0 = disabled)"
 	@echo "    CORES                     Pin the cores for scheduling workload.  (default: all cores)"
 	@echo "                              Accepts the following: pcore, ecore, and min-max range (example: 0-11)"
@@ -132,7 +135,7 @@ benchmarks: check-collateral
 		bar="$$(printf '%0.s█' $$(seq 1 $$filled 2>/dev/null))$$(printf '%0.s░' $$(seq 1 $$empty 2>/dev/null))"; \
 		mode_desc="$$( [ -n "$$concurrent" ] && echo " (concurrent)" || echo "" )"; \
 		echo "[ Info ] [$$current/$$total_tests] $$bar $${pct}%% | $$eta_str | cfg=$$cfg det=$$det cls=$$cls BS$$batch$$mode_desc"; \
-		$(SUDO) ./benchmark_edge_pipelines.sh -p $$cfg -n 8 -b $$batch -d $$det -c $$cls -i $(DURATION) -m $(MODEL_INST) $$concurrent $$cores_opt || { \
+		$(SUDO) $(WALL_POWER_ENV) ./benchmark_edge_pipelines.sh -p $$cfg -n 8 -b $$batch -d $$det -c $$cls -i $(DURATION) -m $(MODEL_INST) $$concurrent $$cores_opt || { \
 			echo "[ FAILED ] Benchmark run failed (cfg=$$cfg det=$$det cls=$$cls batch=$$batch $$concurrent)"; \
 			continue; \
 		}; \

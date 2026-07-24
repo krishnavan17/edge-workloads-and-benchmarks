@@ -11,11 +11,13 @@
 DURATION ?= 60
 CORES ?=
 POWER ?= True
+WALL_POWER ?= False
 CLEAR ?= False
 DRY_RUN ?= False
 RESUME ?= False
 
 SUDO := $(if $(filter True true TRUE yes YES,$(POWER)),sudo,)
+WALL_POWER_ENV := $(if $(filter True true TRUE yes YES,$(WALL_POWER)),WALL_POWER=True,)
 VERBOSE ?= 0
 
 # Usage
@@ -37,6 +39,7 @@ help:
 	@echo "    RESUME                    Skip tests that already have results (default: False)"
 	@echo "    DURATION                  Set the duration for each benchmark test (default: 60 seconds)"
 	@echo "    POWER                     Enable/Disable power/efficiency metrics (default: True, requires sudo)"
+	@echo "    WALL_POWER                Enable PDU wall power measurement (default: False, requires config in utils/helper_functions.sh)"
 	@echo "    CORES                     Pin the cores for scheduling workload.  (default: all cores)"
 	@echo "                              Accepts the following: pcore, ecore, and min-max range (example: 0-11)"
 	@echo "                              Performance and efficiency may vary depending on core pinning"
@@ -141,12 +144,12 @@ benchmarks: check-collateral setup
 		bar="$$(printf '%0.s█' $$(seq 1 $$filled 2>/dev/null))$$(printf '%0.s░' $$(seq 1 $$empty 2>/dev/null))"; \
 		echo "[ Info ] [$$current/$$total_tests] $$bar $${pct}%% | $$eta_str | $$model $$device $$precision $$type"; \
 		if [ "$$type" = "vlm" ]; then \
-			$(SUDO) ./benchmark_genai_vlm.sh -m "$$model" -d "$$device" -p "$$precision" -i $(DURATION) $$cores_opt || { \
+			$(SUDO) $(WALL_POWER_ENV) ./benchmark_genai_vlm.sh -m "$$model" -d "$$device" -p "$$precision" -i $(DURATION) $$cores_opt || { \
 				echo "[ FAILED ] Benchmark run failed (model=$$model device=$$device precision=$$precision type=$$type)"; \
 				continue; \
 			}; \
 		else \
-			$(SUDO) ./benchmark_genai_llm.sh -m "$$model" -d "$$device" -p "$$precision" -i $(DURATION) $$cores_opt || { \
+			$(SUDO) $(WALL_POWER_ENV) ./benchmark_genai_llm.sh -m "$$model" -d "$$device" -p "$$precision" -i $(DURATION) $$cores_opt || { \
 				echo "[ FAILED ] Benchmark run failed (model=$$model device=$$device precision=$$precision type=$$type)"; \
 				continue; \
 			}; \

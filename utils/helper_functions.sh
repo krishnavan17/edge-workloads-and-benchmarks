@@ -82,6 +82,64 @@ fix_sudo_permissions() {
 # Power Monitoring
 POWER_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# ---------------------------------------------------------------------------
+# Wall (socket) power configuration
+# ---------------------------------------------------------------------------
+# Wall power is measured from a PDU outlet over SSH using get_socket_power.py.
+# To enable it, set WALL_POWER=True and populate the connection parameters
+# below (or export them in the environment). When WALL_POWER is enabled but any
+# required parameter is empty, the workload refuses to start.
+WALL_POWER="${WALL_POWER:-False}"
+SOCKET_POWER_IP="${SOCKET_POWER_IP:-}"
+SOCKET_POWER_PORT="${SOCKET_POWER_PORT:-22}"
+SOCKET_POWER_USERNAME="${SOCKET_POWER_USERNAME:-}"
+SOCKET_POWER_PASSWORD="${SOCKET_POWER_PASSWORD:-}"
+SOCKET_POWER_OUTLET="${SOCKET_POWER_OUTLET:-7}"
+
+# Returns success when wall power measurement is enabled.
+wall_power_enabled() {
+    case "${WALL_POWER,,}" in
+        true|yes|1|on) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+# Validate wall power configuration before a workload starts. When WALL_POWER is
+# enabled, all required PDU connection parameters must be provided; otherwise the
+# workload must not start.
+wall_power_validate() {
+    wall_power_enabled || return 0
+
+    local missing=()
+    [[ -z "${SOCKET_POWER_IP}" ]] && missing+=("SOCKET_POWER_IP")
+    [[ -z "${SOCKET_POWER_USERNAME}" ]] && missing+=("SOCKET_POWER_USERNAME")
+    [[ -z "${SOCKET_POWER_PASSWORD}" ]] && missing+=("SOCKET_POWER_PASSWORD")
+    [[ -z "${SOCKET_POWER_PORT}" ]] && missing+=("SOCKET_POWER_PORT")
+    [[ -z "${SOCKET_POWER_OUTLET}" ]] && missing+=("SOCKET_POWER_OUTLET")
+
+    if (( ${#missing[@]} > 0 )); then
+        echo "[ Error ] WALL_POWER is enabled but required parameter(s) are empty: ${missing[*]}" >&2
+        echo "[ Error ] Set them in utils/helper_functions.sh (or the environment) and retry." >&2
+        exit 1
+    fi
+
+    if [[ ! -f "${POWER_SCRIPT_DIR}/get_socket_power.py" ]]; then
+        echo "[ Error ] Wall power script not found: ${POWER_SCRIPT_DIR}/get_socket_power.py" >&2
+        exit 1
+    fi
+
+    if ! command -v python3 >/dev/null 2>&1; then
+        echo "[ Error ] python3 is required for wall power measurement but was not found." >&2
+        exit 1
+    fi
+
+    if ! python3 -c "import paramiko" >/dev/null 2>&1; then
+        echo "[ Error ] Python module 'paramiko' is required for wall power measurement." >&2
+        echo "[ Error ] Install it with: pip install paramiko" >&2
+        exit 1
+    fi
+}
+
 power_init() {
     local results_dir="$1"
     local filename="$2"
@@ -92,6 +150,14 @@ power_init() {
     PowerDelay=$(bc <<< "scale=0; ${duration} / 4")
     PowerDuration=$(bc <<< "scale=0; ${duration} / 2")
     AvgPower="NA"
+
+    # Wall (socket) power state
+    SocketPowerPID=""
+    SocketPowerLogFile="${results_dir}/${filename}_wall_power.csv"
+    AvgWallPower="NA"
+
+    # Fail fast (before the workload starts) if wall power is misconfigured.
+    wall_power_validate
 }
 
 power_start() {
@@ -109,6 +175,31 @@ power_start() {
             PowerPID=""
         fi
     fi
+
+    if wall_power_enabled; then
+        # Align the wall power window with the package power window: start after
+        # PowerDelay and sample for PowerDuration (the middle of the run).
+        (
+            sleep "${PowerDelay}"
+            python3 "${POWER_SCRIPT_DIR}/get_socket_power.py" \
+                --ip "${SOCKET_POWER_IP}" \
+                --port "${SOCKET_POWER_PORT}" \
+                --username "${SOCKET_POWER_USERNAME}" \
+                --password "${SOCKET_POWER_PASSWORD}" \
+                --outlet "${SOCKET_POWER_OUTLET}" \
+                --duration "${PowerDuration}" \
+                --interval 1 \
+                --output "${SocketPowerLogFile}"
+        ) > "${SocketPowerLogFile%.csv}.log" 2>&1 &
+        SocketPowerPID=$!
+        sleep 0.5
+        if kill -0 "${SocketPowerPID}" 2>/dev/null; then
+            echo "[ Info ] Wall power monitoring started (PID: ${SocketPowerPID})"
+        else
+            wait "${SocketPowerPID}" 2>/dev/null || true
+            SocketPowerPID=""
+        fi
+    fi
 }
 
 power_stop() {
@@ -117,6 +208,12 @@ power_stop() {
         wait "${PowerPID}" 2>/dev/null || true
         PowerPID=""
     fi
+    if [[ -n "${SocketPowerPID:-}" ]]; then
+        kill "${SocketPowerPID}" 2>/dev/null || true
+        pkill -P "${SocketPowerPID}" 2>/dev/null || true
+        wait "${SocketPowerPID}" 2>/dev/null || true
+        SocketPowerPID=""
+    fi
 }
 
 power_collect() {
@@ -124,5 +221,13 @@ power_collect() {
     if [[ -f "${PowerLogFile}" ]] && grep -q "W$" "${PowerLogFile}" 2>/dev/null; then
         AvgPower=$(grep -oP '\d+\.\d+(?= W)' "${PowerLogFile}" | \
             awk '{sum+=$1; count++} END {if(count>0) printf "%.2f", sum/count; else print "NA"}')
+    fi
+
+    AvgWallPower="NA"
+    if [[ -f "${SocketPowerLogFile:-}" ]]; then
+        AvgWallPower=$(awk -F',' \
+            'NR>1 && $2 ~ /^[0-9]+(\.[0-9]+)?$/ {sum+=$2; count++} END {if(count>0) printf "%.2f", sum/count; else print "NA"}' \
+            "${SocketPowerLogFile}")
+        [[ -n "${AvgWallPower}" ]] || AvgWallPower="NA"
     fi
 }

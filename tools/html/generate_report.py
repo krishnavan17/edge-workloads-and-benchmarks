@@ -113,6 +113,7 @@ class EdgeRecord:
     pipeline: str
     device_config: str | None = None
     avg_power: float | None = None
+    avg_wall_power: float | None = None
     efficiency: float | None = None
     primary_fps: float | None = None
     secondary_fps: float | None = None
@@ -133,6 +134,7 @@ EDGE_FIELD_MAP: dict[str, tuple[str, type]] = {
     "Measured Stream Density (#)":         ("streams", str),
     "Device Configuration":                ("device_config", lambda v: v or None),
     "Avg Power (W)":                       ("avg_power", parse_float),
+    "Avg Wall Power (W)":                  ("avg_wall_power", parse_float),
     "Efficiency (FPS/W)":                  ("efficiency", parse_float),
     "Primary FPS":                         ("primary_fps", parse_float),
     "Secondary FPS":                       ("secondary_fps", parse_float),
@@ -185,6 +187,7 @@ def aggregate_edge(records: list[EdgeRecord]) -> list[dict]:
             "avg_throughput": avg_field(recs, "throughput"),
             "theoretical_streams": int(round(mean(theo_vals))) if theo_vals else None,
             "avg_power": avg_field(recs, "avg_power"),
+            "avg_wall_power": avg_field(recs, "avg_wall_power"),
             "efficiency": avg_field(recs, "efficiency"),
             "primary_fps": round(mean(pri), 2) if pri else None,
             "secondary_fps": round(mean(sec), 2) if sec else None,
@@ -224,6 +227,7 @@ class VisionRecord:
     median_latency: float | None
     concurrent: str
     avg_power: float | None = None
+    avg_wall_power: float | None = None
     efficiency: float | None = None
     primary_fps: float | None = None
     secondary_fps: float | None = None
@@ -241,6 +245,7 @@ VISION_FIELD_MAP: dict[str, tuple[str, type]] = {
     "Median Latency (ms)":  ("median_latency", parse_float),
     "Concurrent":           ("concurrent", lambda v: v if v else "None"),
     "Avg Power (W)":        ("avg_power", parse_float),
+    "Avg Wall Power (W)":   ("avg_wall_power", parse_float),
     "Efficiency (FPS/W)":   ("efficiency", parse_float),
     "Primary FPS":          ("primary_fps", parse_float),
     "Secondary FPS":        ("secondary_fps", parse_float),
@@ -283,6 +288,7 @@ def aggregate_vision(records: list[VisionRecord]) -> list[dict]:
             "avg_throughput": avg_field(recs, "throughput"),
             "median_latency": avg_field(recs, "median_latency"),
             "avg_power": avg_field(recs, "avg_power"),
+            "avg_wall_power": avg_field(recs, "avg_wall_power"),
             "efficiency": avg_field(recs, "efficiency"),
             "primary_fps": avg_field(recs, "primary_fps"),
             "secondary_fps": avg_field(recs, "secondary_fps"),
@@ -315,6 +321,7 @@ class MediaRecord:
     theoretical: str
     target_fps: str
     avg_power: float | None = None
+    avg_wall_power: float | None = None
     efficiency: float | None = None
 
 
@@ -331,6 +338,7 @@ MEDIA_FIELD_MAP: dict[str, tuple[str, type]] = {
     "Theoretical Stream Density":    ("theoretical", str),
     "Target FPS":                    ("target_fps", str),
     "Avg Power (W)":                 ("avg_power", parse_float),
+    "Avg Wall Power (W)":            ("avg_wall_power", parse_float),
     "Efficiency (FPS/W)":            ("efficiency", parse_float),
 }
 
@@ -362,6 +370,7 @@ def aggregate_media(records: list[MediaRecord]) -> list[dict]:
             "avg_throughput": avg_field(recs, "throughput"),
             "theoretical_streams": int(round(mean(theo_vals))) if theo_vals else None,
             "avg_power": avg_field(recs, "avg_power"),
+            "avg_wall_power": avg_field(recs, "avg_wall_power"),
             "efficiency": avg_field(recs, "efficiency"),
         })
 
@@ -390,6 +399,7 @@ class GenaiRecord:
     first_token_latency: float | None
     second_token_throughput: float | None
     avg_power: float | None = None
+    avg_wall_power: float | None = None
     efficiency: float | None = None
     cores: str = ""
 
@@ -405,6 +415,7 @@ GENAI_FIELD_MAP: dict[str, tuple[str, type]] = {
     "1st Token Latency (ms)":       ("first_token_latency", parse_float),
     "2nd Token Throughput (tok/s)":  ("second_token_throughput", parse_float),
     "Avg Power (W)":                ("avg_power", parse_float),
+    "Avg Wall Power (W)":           ("avg_wall_power", parse_float),
     "Efficiency (tpt/W)":           ("efficiency", parse_float),
     "Cores Pinned":                 ("cores", str),
 }
@@ -439,6 +450,7 @@ def aggregate_genai(records: list[GenaiRecord]) -> list[dict]:
             "first_token_latency": avg_field(recs, "first_token_latency"),
             "second_token_throughput": avg_field(recs, "second_token_throughput"),
             "avg_power": avg_field(recs, "avg_power"),
+            "avg_wall_power": avg_field(recs, "avg_wall_power"),
             "efficiency": avg_field(recs, "efficiency"),
         })
 

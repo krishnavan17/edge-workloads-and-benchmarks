@@ -417,6 +417,10 @@ if [[ "${AvgPower}" != "NA" && "${Throughput}" != "NA" ]]; then
         'BEGIN { printf("%.2f", fps / watts) }')"
     echo "[ Info ] Power Efficiency: ${Efficiency} FPS/W"
 fi
+# shellcheck disable=SC2154  # AvgWallPower set by power_collect()
+if [[ "${AvgWallPower}" != "NA" ]]; then
+    echo "[ Info ] Wall Power: ${AvgWallPower} W"
+fi
 echo -e "\n\n"
 
 # Save results to a CSV file
@@ -424,10 +428,10 @@ csv_escape() { printf '%s' "$1" | sed 's/"/""/g'; }
 
 if [[ ${#Commands[@]} -gt 1 ]]; then
     # Multiple pipelines in concurrent mode
-    CSVLabels="Timestamp,System,Duration (s),Cores Pinned,Pipeline Config,Detect Device,Classify Device,Batch,Model Instances,Throughput (fps),Throughput per Stream (fps/#),Theoretical Stream Density (@${TARGET_FPS}fps),Measured Stream Density (#),Concurrent Mode,Device Configuration,Avg Power (W),Efficiency (FPS/W),Primary FPS,Secondary FPS,Pipeline1,Pipeline2"
+    CSVLabels="Timestamp,System,Duration (s),Cores Pinned,Pipeline Config,Detect Device,Classify Device,Batch,Model Instances,Throughput (fps),Throughput per Stream (fps/#),Theoretical Stream Density (@${TARGET_FPS}fps),Measured Stream Density (#),Concurrent Mode,Device Configuration,Avg Power (W),Avg Wall Power (W),Efficiency (FPS/W),Primary FPS,Secondary FPS,Pipeline1,Pipeline2"
     
     printf '%s\n' "${CSVLabels}" > "${ResultsDir}/${Filename}.csv"
-    printf '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' \
+    printf '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' \
         "$(csv_escape "${Timestamp}")" \
         "$(csv_escape "${System}")" \
         "$(csv_escape "${Duration}")" \
@@ -444,6 +448,7 @@ if [[ ${#Commands[@]} -gt 1 ]]; then
         "$(csv_escape "${Concurrent}")" \
         "$(csv_escape "${DeviceTag}")" \
         "$(csv_escape "${AvgPower}")" \
+        "$(csv_escape "${AvgWallPower}")" \
         "$(csv_escape "${Efficiency}")" \
         "$(csv_escape "${PrimaryFPS}")" \
         "$(csv_escape "${SecondaryFPS}")" \
@@ -452,10 +457,10 @@ if [[ ${#Commands[@]} -gt 1 ]]; then
         >> "${ResultsDir}/${Filename}.csv"
 else
     # Not concurrent mode
-    CSVLabels="Timestamp,System,Duration (s),Cores Pinned,Pipeline Config,Detect Device,Classify Device,Batch,Model Instances,Throughput (fps),Throughput per Stream (fps/#),Theoretical Stream Density (@${TARGET_FPS}fps),Measured Stream Density (#),Concurrent Mode,Device Configuration,Avg Power (W),Efficiency (FPS/W),Pipeline"
+    CSVLabels="Timestamp,System,Duration (s),Cores Pinned,Pipeline Config,Detect Device,Classify Device,Batch,Model Instances,Throughput (fps),Throughput per Stream (fps/#),Theoretical Stream Density (@${TARGET_FPS}fps),Measured Stream Density (#),Concurrent Mode,Device Configuration,Avg Power (W),Avg Wall Power (W),Efficiency (FPS/W),Pipeline"
     
     printf '%s\n' "${CSVLabels}" > "${ResultsDir}/${Filename}.csv"
-    printf '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' \
+    printf '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' \
         "$(csv_escape "${Timestamp}")" \
         "$(csv_escape "${System}")" \
         "$(csv_escape "${Duration}")" \
@@ -472,6 +477,7 @@ else
         "$(csv_escape "${Concurrent}")" \
         "$(csv_escape "${DeviceTag}")" \
         "$(csv_escape "${AvgPower}")" \
+        "$(csv_escape "${AvgWallPower}")" \
         "$(csv_escape "${Efficiency}")" \
         "$(csv_escape "${PipelineTemplates[0]}")" \
         >> "${ResultsDir}/${Filename}.csv"
