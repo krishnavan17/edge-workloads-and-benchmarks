@@ -21,3 +21,7 @@ setup/drivers/npu/*
 __pycache__/
 venv*/
 coco.yaml
+
+# Local wall power (PDU) credentials — never commit
+utils/wall_power.env
+wall_power.env

@@ -89,12 +89,32 @@ POWER_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # To enable it, set WALL_POWER=True and populate the connection parameters
 # below (or export them in the environment). When WALL_POWER is enabled but any
 # required parameter is empty, the workload refuses to start.
+#
+# NOTE: Benchmarks often run under sudo (POWER=True), and sudo strips exported
+# shell variables. To make settings survive sudo, put them in a local env file
+# named "wall_power.env" next to this script (it is sourced below and ignored by
+# git). Example wall_power.env:
+#     WALL_POWER=True
+#     SOCKET_POWER_IP=10.106.147.131
+#     SOCKET_POWER_USERNAME=support
+#     SOCKET_POWER_PASSWORD='User1234'
+#     SOCKET_POWER_OUTLET=1
+if [[ -f "${POWER_SCRIPT_DIR}/wall_power.env" ]]; then
+    # shellcheck disable=SC1090,SC1091
+    source "${POWER_SCRIPT_DIR}/wall_power.env"
+fi
+
 WALL_POWER="${WALL_POWER:-False}"
 SOCKET_POWER_IP="${SOCKET_POWER_IP:-}"
 SOCKET_POWER_PORT="${SOCKET_POWER_PORT:-22}"
 SOCKET_POWER_USERNAME="${SOCKET_POWER_USERNAME:-}"
 SOCKET_POWER_PASSWORD="${SOCKET_POWER_PASSWORD:-}"
 SOCKET_POWER_OUTLET="${SOCKET_POWER_OUTLET:-7}"
+
+# Interpreter used to run get_socket_power.py. Resolved once when this file is
+# sourced (before any workload venv is activated) so wall power always uses the
+# system python3 where paramiko is installed. Override via WALL_POWER_PYTHON.
+WALL_POWER_PYTHON="${WALL_POWER_PYTHON:-$(command -v python3 2>/dev/null || echo python3)}"
 
 # Returns success when wall power measurement is enabled.
 wall_power_enabled() {
@@ -128,14 +148,14 @@ wall_power_validate() {
         exit 1
     fi
 
-    if ! command -v python3 >/dev/null 2>&1; then
-        echo "[ Error ] python3 is required for wall power measurement but was not found." >&2
+    if ! command -v "${WALL_POWER_PYTHON}" >/dev/null 2>&1; then
+        echo "[ Error ] python3 ('${WALL_POWER_PYTHON}') is required for wall power measurement but was not found." >&2
         exit 1
     fi
 
-    if ! python3 -c "import paramiko" >/dev/null 2>&1; then
+    if ! "${WALL_POWER_PYTHON}" -c "import paramiko" >/dev/null 2>&1; then
         echo "[ Error ] Python module 'paramiko' is required for wall power measurement." >&2
-        echo "[ Error ] Install it with: pip install paramiko" >&2
+        echo "[ Error ] Install it with: sudo apt-get install -y python3-paramiko  (or: ${WALL_POWER_PYTHON} -m pip install paramiko)" >&2
         exit 1
     fi
 }
@@ -181,7 +201,7 @@ power_start() {
         # PowerDelay and sample for PowerDuration (the middle of the run).
         (
             sleep "${PowerDelay}"
-            python3 "${POWER_SCRIPT_DIR}/get_socket_power.py" \
+            "${WALL_POWER_PYTHON}" "${POWER_SCRIPT_DIR}/get_socket_power.py" \
                 --ip "${SOCKET_POWER_IP}" \
                 --port "${SOCKET_POWER_PORT}" \
                 --username "${SOCKET_POWER_USERNAME}" \
