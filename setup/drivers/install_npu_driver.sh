@@ -35,9 +35,14 @@ case "$UBUNTU_VERSION" in
     24.04)
         echo -e "${CYAN}[ Info ]${NC} Ubuntu $UBUNTU_VERSION detected"
         ;;
+    26.04)
+        echo -e "${CYAN}[ Info ]${NC} Ubuntu $UBUNTU_VERSION detected"
+        echo -e "${CYAN}[ Info ]${NC} NPU driver packages are assumed to be already installed on Ubuntu 26.04"
+        exit 0
+        ;;
     *)
         echo -e "${RED}[ Error ]${NC} Unsupported Ubuntu version: $UBUNTU_VERSION"
-        echo "NPU driver ${NPU_DRIVER_VERSION} requires Ubuntu 24.04"
+        echo "NPU driver ${NPU_DRIVER_VERSION} requires Ubuntu 24.04 or 26.04"
         exit 1
         ;;
 esac

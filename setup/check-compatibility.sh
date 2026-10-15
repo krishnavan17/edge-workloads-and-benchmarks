@@ -27,10 +27,10 @@ KERNEL_VER=$(uname -r)
 if [ -f /etc/os-release ]; then
     . /etc/os-release
     if [[ "$ID" == "ubuntu" ]]; then
-        if [[ "$VERSION_ID" == "22.04" || "$VERSION_ID" == "24.04" ]]; then
+        if [[ "$VERSION_ID" == "22.04" || "$VERSION_ID" == "24.04" || "$VERSION_ID" == "26.04" ]]; then
             print_pass "OS:         Ubuntu $VERSION_ID, Kernel $KERNEL_VER"
         else
-            print_warn "OS:         Ubuntu $VERSION_ID, Kernel $KERNEL_VER (recommended: 22.04 or 24.04)"
+            print_warn "OS:         Ubuntu $VERSION_ID, Kernel $KERNEL_VER (recommended: 22.04, 24.04 or 26.04)"
             WARNINGS=$((WARNINGS + 1))
         fi
     else

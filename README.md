@@ -15,7 +15,7 @@ Edge Workloads and Benchmarks is a benchmarking suite for validating media and e
 ## Prerequisites
 
 ### System Requirements
-Repository validated on Ubuntu OS version 24.04.4 LTS with kernel version 6.16
+Repository validated on Ubuntu OS version 24.04.4 LTS with kernel version 6.16, and Ubuntu 26.04 LTS
 - GPU with video acceleration API (VA-API) media support
 - 16+ GB Memory
 - 128 GB storage space (16 GB without GenAI models)

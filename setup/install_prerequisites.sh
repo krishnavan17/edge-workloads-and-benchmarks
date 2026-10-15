@@ -88,7 +88,7 @@ fi
 # Detect Ubuntu version
 ubuntu_version=$(lsb_release -rs)
 case "$ubuntu_version" in
-    24.04|22.04)
+    24.04|22.04|26.04)
         echo -e "${CYAN}[ Info ]${NC} Ubuntu $ubuntu_version detected"
         ;;
     *)

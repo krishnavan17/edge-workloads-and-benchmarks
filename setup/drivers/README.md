@@ -20,7 +20,7 @@ GPU and NPU compute drivers required for device-specific benchmarks.
 **Specifications:**
 - NPU Driver Version: v1.32.0
 - Level Zero: 1.27.0
-- Requires Ubuntu 24.04
+- Requires Ubuntu 24.04 (on Ubuntu 26.04, driver packages are assumed to be already installed)
 
 
 ## Directory Structure
